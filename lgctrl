@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+use strict;
+use File::Basename;
+use Getopt::Long qw(:config auto_help);
+use Pod::Usage;
+use Device::SerialPort;
+
+use vars qw($off $on $mute $unmute $vol $input $irkey);
+
+my $NAME = basename($0);
+my $port = '/dev/ttyS0';
+
+my $device;
+
+my $result = GetOptions("d=s" => \$port,
+  "off" => \$off, "on" => \$on,
+  "mute" => \$mute, "unmute" => \$unmute, "vol|volume=i" => \$vol,
+  "input=s" => \$input, "irkey=s" => \$irkey);
+
+($device = Device::SerialPort->new($port)) || die "failed to open serial port";
+$device->baudrate(9600) || die "fail setting baud rate";
+$device->parity('none')      || die "fail setting parity";
+$device->databits(8)	     || die "fail setting databits";
+$device->stopbits(1)	     || die "fail setting stopbits";
+$device->handshake('none')   || die "fail setting handshake";
+$device->write_settings      || die "no settings";
+
+$device->write("ka 01 00\r") if ($off);
+$device->write("ka 01 01\r") if ($on);
+$device->write("ke 01 00\r") if ($mute);
+$device->write("ke 01 01\r") if ($unmute);
+$device->write("kf 01 $vol\r") if ($vol);
+$device->write("kb 01 00\r") if ($input eq 'dtv');
+$device->write("kb 01 01\r") if ($input eq 'atv');
+$device->write("kb 01 02\r") if ($input eq 'av1');
+$device->write("kb 01 03\r") if ($input eq 'av2');
+$device->write("kb 01 05\r") if ($input eq 'component');
+$device->write("kb 01 06\r") if ($input eq 'rgb');
+$device->write("kb 01 07\r") if ($input eq 'hdmi');
+$device->write("mc 01 00\r") if ($irkey eq "pr+");
+$device->write("mc 01 01\r") if ($irkey eq "pr-");
+$device->write("mc 01 02\r") if ($irkey eq "vol+");
+$device->write("mc 01 03\r") if ($irkey eq "vol-");
+$device->write("mc 01 40\r") if ($irkey eq "up");
+$device->write("mc 01 41\r") if ($irkey eq "down");
+$device->write("mc 01 06\r") if ($irkey eq "right");
+$device->write("mc 01 07\r") if ($irkey eq "left");
+$device->write("mc 01 08\r") if ($irkey eq "power");
+$device->write("mc 01 09\r") if ($irkey eq "mute");
+$device->write("mc 01 10\r") if ($irkey eq "0");
+$device->write("mc 01 11\r") if ($irkey eq "1");
+$device->write("mc 01 12\r") if ($irkey eq "2");
+$device->write("mc 01 13\r") if ($irkey eq "3");
+$device->write("mc 01 14\r") if ($irkey eq "4");
+$device->write("mc 01 15\r") if ($irkey eq "5");
+$device->write("mc 01 16\r") if ($irkey eq "6");
+$device->write("mc 01 17\r") if ($irkey eq "7");
+$device->write("mc 01 18\r") if ($irkey eq "8");
+$device->write("mc 01 19\r") if ($irkey eq "9");
+$device->write("mc 01 0B\r") if ($irkey eq "input");
+$device->write("mc 01 AA\r") if ($irkey eq "info");
+$device->write("mc 01 AB\r") if ($irkey eq "guide");
+$device->write("mc 01 56\r") if ($irkey eq "subtitle");
+$device->write("mc 01 5B\r") if ($irkey eq "exit");
+$device->write("mc 01 1E\r") if ($irkey eq "fav");
+$device->write("mc 01 1A\r") if ($irkey eq "q.view");
+$device->write("mc 01 50\r") if ($irkey eq "d/atv");
+$device->write("mc 01 F0\r") if ($irkey eq "tv/radio");
+$device->write("mc 01 0A\r") if ($irkey eq "i/ii");
+$device->write("mc 01 0E\r") if ($irkey eq "sleep");
+$device->write("mc 01 43\r") if ($irkey eq "menu");
+$device->write("mc 01 44\r") if ($irkey eq "ok");
+$device->write("mc 01 53\r") if ($irkey eq "list");
+$device->write("mc 01 20\r") if ($irkey eq "text");
+$device->write("mc 01 2A\r") if ($irkey eq "reveal");
+$device->write("mc 01 26\r") if ($irkey eq "time");
+$device->write("mc 01 28\r") if ($irkey eq "back");
+$device->write("mc 01 62\r") if ($irkey eq "update");
+$device->write("mc 01 70\r") if ($irkey eq "index");
+$device->write("mc 01 65\r") if ($irkey eq "hold");
+$device->write("mc 01 61\r") if ($irkey eq "blue");
+$device->write("mc 01 63\r") if ($irkey eq "yellow");
+$device->write("mc 01 71\r") if ($irkey eq "green");
+$device->write("mc 01 72\r") if ($irkey eq "red");
+$device->write("mc 01 79\r") if ($irkey eq "ratio");
+
+$device->close || warn "close failed";
+
+=pod
+
+=head1 NAME
+
+lgctl - Control LG monitor via an RS-232 port
+
+=head1 SYNOPSIS
+
+lgctrl [--off] [--on] [--mute] [--unmute] [--vol level]
+
+=cut
